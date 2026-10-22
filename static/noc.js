@@ -381,7 +381,7 @@
     lastSensors = data.sensors || [];
     updateSensorApplicationOptions(lastSensors);
     for (const [id, value] of Object.entries({gatewaysTotal:s.gateways_total, gatewaysOnline:s.gateways_online, gatewaysOffline:s.gateways_offline})) document.getElementById(id).textContent = value;
-    document.getElementById('updated').textContent = `Modo: ${data.mode} · Actualizado: ${date(data.generated_at)}${data.error ? ` · Error: ${data.error}` : ''}`;
+    document.getElementById('updated').textContent = `Actualizado: ${date(data.generated_at)}${data.error ? ` · Error: ${data.error}` : ''}`;
     renderLiveMap(data.gateways);
     document.getElementById('gatewayRows').innerHTML = data.gateways.map(g => `<tr><td>${esc(g.gateway_id)}</td><td>${esc(g.display_name)}</td><td class="${g.online ? 'online' : 'offline'}">${g.online ? 'ONLINE' : 'OFFLINE'}</td><td>${date(g.last_seen_at)}</td><td>${hasLocation(g) ? `<a href="${googleMapsUrl(g)}" target="_blank" rel="noopener noreferrer">${Number(g.latitude).toFixed(5)}, ${Number(g.longitude).toFixed(5)}</a>` : '-'}</td><td><a href="${ttnConsoleUrl(g)}" target="_blank" rel="noopener noreferrer">Abrir TTN Cloud</a></td></tr>`).join('');
     const filteredSensors = visibleSensors();
