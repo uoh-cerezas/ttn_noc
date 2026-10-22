@@ -1,0 +1,8 @@
+services:
+  ttn-noc:
+    build: .
+    ports:
+      - "8060:8060"
+    env_file:
+      - .env
+    restart: unless-stopped

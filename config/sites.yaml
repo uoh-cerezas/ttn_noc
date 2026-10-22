@@ -1,0 +1,6 @@
+# Replace these examples with the actual TTN device and gateway identifiers.
+sites:
+  example-site:
+    display_name: Example site
+    gateway_ids: [example-gateway]
+    device_ids: [example-sensor]

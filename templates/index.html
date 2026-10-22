@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIC Cerezas — Monitoreo de gateways</title>
+  <style>
+    :root { color-scheme: light; font-family: "Open Sans", Arial, sans-serif; }
+    body { margin: 0; background: #f1f2f7; color: #292b35; }
+    .site-header { height: 55px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; padding: 0 30px; background: #fff; border-bottom: 1px solid #e8e9ed; box-shadow: none; }
+    .brand { display: inline-flex; align-items: center; height: 55px; }
+    .brand img { display: block; width: 145px; max-height: 50px; object-fit: contain; }
+    .header-context { color: #878787; font-size: .9rem; text-align: right; }
+    .header-context strong { display: block; color: #292b35; font-size: 1rem; font-weight: 600; }
+    main { max-width: 1250px; margin: 30px auto; padding: 0 30px; }
+    h1, h2 { font-weight: 400; }
+    h1 { margin: 0 0 .35rem; font-size: 1.85rem; }
+    h2 { margin: 1.8rem 0 .75rem; font-size: 1.35rem; color: #292b35; }
+    .page-subtitle { margin: 0 0 1.5rem; color: #878787; font-size: 1rem; }
+    .dashboard-tabs { display: flex; gap: .35rem; margin-bottom: 1.25rem; border-bottom: 1px solid #dce1e5; }
+    .tab-button { border: 0; border-bottom: 3px solid transparent; padding: .7rem 1rem; background: transparent; color: #878787; font: inherit; cursor: pointer; }
+    .tab-button:hover, .tab-button.active { color: #2486c5; }
+    .tab-button.active { border-bottom-color: #2486c5; font-weight: 600; }
+    .tab-panel[hidden] { display: none; }
+    .summary { display: grid; grid-template-columns: repeat(3, minmax(130px, 1fr)); gap: 1rem; }
+    .card { background: white; border-radius: .6rem; padding: 1rem; box-shadow: 0 2px 9px #0001; }
+    .value { font-size: 1.9rem; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 1.5rem; }
+    th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e4e8eb; }
+    th { background: #e9eef1; }
+    .online { color: #18794e; font-weight: 700; }
+    .offline, .stale { color: #b42318; font-weight: 700; }
+    .muted { color: #667781; }
+    .gateway-map { position: relative; height: 520px; margin-top: 1.5rem; background: #dcebf0; border-radius: .6rem; box-shadow: 0 2px 9px #0001; overflow: hidden; cursor: grab; touch-action: none; }
+    .gateway-map.dragging { cursor: grabbing; }
+    #gatewayTiles, #gatewayMarkers, #sensorTiles, #sensorMarkers { position: absolute; inset: 0; overflow: hidden; }
+    #gatewayTiles img, #sensorTiles img { position: absolute; width: 256px; height: 256px; user-select: none; pointer-events: none; }
+    #gatewayMarkers, #sensorMarkers { pointer-events: none; }
+    .gateway-pin { position: absolute; width: 22px; height: 22px; border: 3px solid #fff; border-radius: 50% 50% 50% 0; transform: translate(-50%, -100%) rotate(-45deg); box-shadow: 0 2px 5px #0009; cursor: pointer; pointer-events: auto; }
+    .gateway-pin::after { content: ''; position: absolute; width: 7px; height: 7px; left: 4px; top: 4px; border-radius: 50%; background: #fff; }
+    .gateway-pin.online { background: #1976d2; }
+    .gateway-pin.offline { background: #d32f2f; }
+    .gateway-popup { position: absolute; z-index: 10; min-width: 220px; max-width: 280px; padding: .75rem .85rem; transform: translate(-50%, calc(-100% - 14px)); background: #fff; color: #17212b; border: 1px solid #d5dde2; border-radius: .5rem; box-shadow: 0 3px 12px #0004; font-size: .9rem; pointer-events: auto; }
+    .gateway-popup[hidden] { display: none; }
+    .gateway-popup::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: 14px; height: 14px; background: #fff; border-right: 1px solid #d5dde2; border-bottom: 1px solid #d5dde2; transform: translateX(-50%) rotate(45deg); }
+    .gateway-popup-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-bottom: .45rem; }
+    .gateway-popup-name { font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+    .gateway-popup-close { border: 0; background: transparent; color: #667781; font-size: 1.2rem; line-height: 1; padding: 0; cursor: pointer; }
+    .gateway-popup-row { display: flex; justify-content: space-between; gap: .75rem; padding: .15rem 0; }
+    .gateway-popup-label { color: #667781; }
+    .gateway-popup-link { display: inline-block; margin-top: .5rem; color: #145dbf; }
+    .map-controls { position: absolute; z-index: 5; top: 12px; right: 12px; display: grid; gap: 4px; }
+    .map-controls button { width: 36px; height: 36px; border: 0; border-radius: 4px; background: #fff; color: #17212b; font-size: 1.5rem; line-height: 1; box-shadow: 0 1px 5px #0005; cursor: pointer; }
+    .map-controls button:hover { background: #eef4f6; }
+    .map-attribution { position: absolute; z-index: 5; right: 5px; bottom: 3px; padding: 2px 5px; background: #fff9; color: #334; font-size: 11px; }
+    .map-note { margin-top: .6rem; color: #667781; }
+    .sensor-filter { display: flex; align-items: center; gap: .65rem; margin: 1.25rem 0 0; }
+    .sensor-filter label { color: #667781; font-weight: 600; }
+    .sensor-filter select { min-width: 270px; padding: .55rem .7rem; border: 1px solid #c9d4da; border-radius: .35rem; background: #fff; color: #292b35; font: inherit; }
+    @media (max-width: 800px) { .site-header { padding: 0 16px; } .header-context { font-size: .75rem; } .header-context strong { font-size: .85rem; } main { margin-top: 20px; padding: 0 16px; } .summary { grid-template-columns: repeat(2, 1fr); } table { font-size: .85rem; } .sensor-filter { align-items: flex-start; flex-direction: column; } .sensor-filter select { width: 100%; min-width: 0; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="UOH Cerezas home"><img src="/static/images/UOHCerezas.jpg" alt="UOH Cerezas"></a>
+    <div class="header-context"><strong>NOC</strong><span id="updated">Cargando...</span></div>
+  </header>
+  <main>
+    <h1 id="pageTitle">Monitoreo de gateways</h1>
+    <p class="page-subtitle">Estado en vivo de la red LoRaWAN de FIC Cerezas.</p>
+    <nav class="dashboard-tabs" aria-label="Secciones del NOC">
+      <button class="tab-button active" type="button" data-tab="gatewayView">Gateways</button>
+      <button class="tab-button" type="button" data-tab="sensorView">Sensores</button>
+    </nav>
+    <section id="gatewayView" class="tab-panel">
+    <section class="summary">
+      <div class="card"><div>Gateways</div><div id="gatewaysTotal" class="value">-</div></div>
+      <div class="card"><div>Gateways online</div><div id="gatewaysOnline" class="value online">-</div></div>
+      <div class="card"><div>Gateways offline</div><div id="gatewaysOffline" class="value offline">-</div></div>
+    </section>
+    <h2>Mapa de gateways</h2>
+    <div id="gatewayMap" class="gateway-map" role="application" aria-label="Mapa en vivo de gateways">
+      <div id="gatewayTiles" aria-hidden="true"></div>
+      <div id="gatewayMarkers"></div>
+      <div id="gatewayPopup" class="gateway-popup" hidden>
+        <div class="gateway-popup-header"><div id="gatewayPopupName" class="gateway-popup-name"></div><button id="gatewayPopupClose" class="gateway-popup-close" type="button" aria-label="Close gateway details">×</button></div>
+        <div class="gateway-popup-row"><span class="gateway-popup-label">Estado</span><strong id="gatewayPopupStatus"></strong></div>
+        <div class="gateway-popup-row"><span class="gateway-popup-label">Última conexión</span><span id="gatewayPopupLastSeen"></span></div>
+        <div class="gateway-popup-row"><span class="gateway-popup-label">Coordenadas</span><span id="gatewayPopupCoordinates"></span></div>
+        <a id="gatewayPopupTtnLink" class="gateway-popup-link" href="#" target="_blank" rel="noopener noreferrer">Abrir en TTN Cloud</a>
+        <a id="gatewayPopupMapLink" class="gateway-popup-link" href="#" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a>
+      </div>
+      <div class="map-controls"><button id="zoomIn" type="button" aria-label="Acercar mapa">+</button><button id="zoomOut" type="button" aria-label="Alejar mapa">−</button></div>
+      <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a></div>
+    </div>
+    <div id="mapNote" class="map-note"></div>
+    <h2>Gateways</h2><table><thead><tr><th>ID</th><th>Nombre</th><th>Estado</th><th>Última conexión</th><th>Coordenadas</th><th>TTN Cloud</th></tr></thead><tbody id="gatewayRows"></tbody></table>
+    </section>
+    <section id="sensorView" class="tab-panel" hidden>
+      <div class="sensor-filter">
+        <label for="sensorApplicationFilter">Beneficiario/Campo:</label>
+        <select id="sensorApplicationFilter" aria-label="Filtrar sensores por beneficiario o campo">
+          <option value="">Todos los beneficiarios/campos</option>
+        </select>
+      </div>
+      <section class="summary">
+        <div class="card"><div>Sensores</div><div id="sensorsTotal" class="value">-</div></div>
+        <div class="card"><div>Sensores online</div><div id="sensorsOnline" class="value online">-</div></div>
+        <div class="card"><div>Sensores offline</div><div id="sensorsOffline" class="value offline">-</div></div>
+      </section>
+      <h2>Mapa de sensors</h2>
+      <div id="sensorMap" class="gateway-map" role="application" aria-label="Mapa en vivo de sensors">
+        <div id="sensorTiles" aria-hidden="true"></div>
+        <div id="sensorMarkers"></div>
+        <div id="sensorPopup" class="gateway-popup" hidden>
+          <div class="gateway-popup-header"><div id="sensorPopupName" class="gateway-popup-name"></div><button id="sensorPopupClose" class="gateway-popup-close" type="button" aria-label="Cerrar detalles del sensor">×</button></div>
+          <div class="gateway-popup-row"><span class="gateway-popup-label">Estado</span><strong id="sensorPopupStatus"></strong></div>
+          <div class="gateway-popup-row"><span class="gateway-popup-label">Aplicación</span><a id="sensorPopupApplication" href="#" target="_blank" rel="noopener noreferrer"></a></div>
+          <div class="gateway-popup-row"><span class="gateway-popup-label">Última conexión</span><span id="sensorPopupLastSeen"></span></div>
+          <div class="gateway-popup-row"><span class="gateway-popup-label">Coordenadas</span><span id="sensorPopupCoordinates"></span></div>
+          <a id="sensorPopupTtnLink" class="gateway-popup-link" href="#" target="_blank" rel="noopener noreferrer">Abrir en TTN Cloud</a>
+          <a id="sensorPopupMapLink" class="gateway-popup-link" href="#" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a>
+        </div>
+        <div class="map-controls"><button id="sensorZoomIn" type="button" aria-label="Acercar mapa">+</button><button id="sensorZoomOut" type="button" aria-label="Alejar mapa">−</button></div>
+        <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a></div>
+      </div>
+      <div id="sensorMapNote" class="map-note"></div>
+      <h2>Sensores</h2><table><thead><tr><th>Device ID</th><th>Tipo de sensor</th><th>Aplicación</th><th>Estado</th><th>Última conexión</th><th>Coordenadas</th><th>TTN Cloud</th></tr></thead><tbody id="sensorRows"></tbody></table>
+    </section>
+  </main>
+  <script src="/static/noc.js" defer></script>
+</body>
+</html>
