@@ -60,9 +60,9 @@
     @media (max-width: 800px) { .site-header { padding: 0 16px; } .header-context { font-size: .75rem; } .header-context strong { font-size: .85rem; } main { margin-top: 20px; padding: 0 16px; } .summary { grid-template-columns: repeat(2, 1fr); } table { font-size: .85rem; } .sensor-filter { align-items: flex-start; flex-direction: column; } .sensor-filter select { width: 100%; min-width: 0; } }
   </style>
 </head>
-<body>
+<body data-noc-base-path="{{ base_path }}">
   <header class="site-header">
-    <a class="brand" href="/" aria-label="UOH Cerezas home"><img src="/static/images/UOHCerezas.jpg" alt="UOH Cerezas"></a>
+    <a class="brand" href="{{ base_path or '/' }}" aria-label="UOH Cerezas home"><img src="{{ base_path }}/static/images/UOHCerezas.jpg" alt="UOH Cerezas"></a>
     <div class="header-context"><strong>NOC</strong><span id="updated">Cargando...</span></div>
   </header>
   <main>
@@ -128,6 +128,6 @@
       <h2>Sensores</h2><table><thead><tr><th>Device ID</th><th>Tipo de sensor</th><th>Aplicación</th><th>Estado</th><th>Última conexión</th><th>Coordenadas</th><th>TTN Cloud</th></tr></thead><tbody id="sensorRows"></tbody></table>
     </section>
   </main>
-  <script src="/static/noc.js" defer></script>
+  <script src="{{ base_path }}/static/noc.js" defer></script>
 </body>
 </html>

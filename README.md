@@ -154,3 +154,23 @@ second GET and reports whether the coordinates were verified. The
 column; `s_altitud_m` is a relative sensor-height value and is not sent to
 TTN. TTN stores altitude as an integer number of meters, so decimal terrain
 values are rounded to the nearest meter.
+# Local integration with the existing website
+
+The NOC itself does not authenticate users. When it is mounted below the
+existing website at `/noc`, the website application performs the administrator
+check and forwards authorized read-only requests to this service.
+
+For local integration testing, use the mock provider and the `/noc` base path:
+
+```bash
+docker compose -f compose.yaml -f compose.local.yaml up --build -d
+docker compose -f compose.yaml -f compose.local.yaml ps
+curl -fsS http://127.0.0.1:8060/api/health | python3 -m json.tool
+```
+
+The local override does not contact TTN and does not modify any database. The
+normal `compose.yaml` remains available for live TTN testing.
+
+The website proxy must use `http://ttn-noc:8060` when both containers share a
+Docker network. When the website is running in a local container and the NOC
+is published on the host, use `http://host.docker.internal:8060` instead.

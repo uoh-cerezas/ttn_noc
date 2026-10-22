@@ -1,4 +1,5 @@
 (() => {
+  const basePath = String(document.body?.dataset.nocBasePath || '').replace(/\/$/, '');
   const esc = value => String(value ?? '-').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const date = value => value ? new Date(value).toLocaleString() : '-';
   const hasLocation = gateway => gateway.latitude != null && gateway.longitude != null && Number.isFinite(Number(gateway.latitude)) && Number.isFinite(Number(gateway.longitude));
@@ -374,7 +375,7 @@
   });
 
   async function refresh() {
-    const data = await fetch('/api/status').then(response => response.json());
+    const data = await fetch(`${basePath}/api/status`).then(response => response.json());
     const s = data.summary;
     lastGateways = data.gateways;
     lastSensors = data.sensors || [];

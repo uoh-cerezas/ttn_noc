@@ -26,7 +26,10 @@ def create_app() -> Flask:
 
     @app.get("/")
     def index():
-        return render_template("index.html")
+        # The NOC can be mounted at the domain root during local development
+        # or below a path such as /noc behind the existing website.
+        base_path = os.getenv("NOC_BASE_PATH", "").strip().rstrip("/")
+        return render_template("index.html", base_path=base_path)
 
     @app.get("/api/status")
     def status():

@@ -1,0 +1,8 @@
+# Local integration override. It uses the mock provider and mounts the NOC
+# below /noc so it can be tested through the website proxy without contacting
+# TTN or changing any production data.
+services:
+  ttn-noc:
+    environment:
+      NOC_MODE: mock
+      NOC_BASE_PATH: /noc
